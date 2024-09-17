@@ -1,4 +1,4 @@
-package com.hackease.restapiprojectone.domains.entities;
+package com.hackease.restapiprojectone.domain.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

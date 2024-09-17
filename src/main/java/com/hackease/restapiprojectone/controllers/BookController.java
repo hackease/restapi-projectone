@@ -1,83 +1,105 @@
 package com.hackease.restapiprojectone.controllers;
 
-import com.hackease.restapiprojectone.domains.dtos.BookDto;
-import com.hackease.restapiprojectone.domains.entities.BookEntity;
-import com.hackease.restapiprojectone.mappers.Mapper;
-import com.hackease.restapiprojectone.mappers.impl.BookMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.Exceptions.ValidationException;
+import com.hackease.restapiprojectone.domain.dtos.BookDto;
+import com.hackease.restapiprojectone.domain.dtos.ResponseDto;
+import com.hackease.restapiprojectone.domain.entities.BookEntity;
 import com.hackease.restapiprojectone.services.BookService;
-import org.springframework.data.domain.Page;
+import com.hackease.restapiprojectone.utility.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RestController
 public class BookController {
     
-    private final BookService bookService;
-    
-    private final Mapper<BookEntity, BookDto> bookMapper;
-    
-    public BookController(BookService bookService, BookMapper bookMapper) {
-        this.bookService = bookService;
-        this.bookMapper = bookMapper;
-    }
+    @Autowired
+    private BookService bookService;
     
     @PutMapping(path = "/books/{isbn}")
-    public ResponseEntity<BookDto> saveUpdate(
+    public ResponseEntity<ResponseDto<BookDto>> saveUpdate(
             @PathVariable(name = "isbn") String isbn,
-            @RequestBody BookDto bookDto) {
-        BookEntity book = bookMapper.mapToEntity(bookDto);
-        
+            @RequestBody BookDto bookDto
+    ) throws DataNotFoundException, ValidationException {
+        BookEntity book = bookDto.toEntity();
         boolean isExist = bookService.isExist(isbn);
+        BookDto savedUpdatedBook = bookService.saveUpdate(isbn, book);
         
-        BookEntity savedBook = bookService.saveUpdate(isbn, book);
-        BookDto savedUpdatedBook = bookMapper.mapToDto(savedBook);
+        if (isExist) return new ResponseEntity<>(
+                new ResponseDto<>(
+                        HttpStatus.OK.value(),
+                        Constants.BOOK_CHANGED_SUCCESS,
+                        savedUpdatedBook
+                ), HttpStatus.OK
+        );
         
-        if (isExist) return new ResponseEntity<>(savedUpdatedBook, HttpStatus.OK);
-        return new ResponseEntity<>(savedUpdatedBook, HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                new ResponseDto<>(
+                        HttpStatus.CREATED.value(),
+                        Constants.BOOK_CREATE_SUCCESS,
+                        savedUpdatedBook
+                ), HttpStatus.CREATED
+        );
     }
     
     @GetMapping(path = "/books/{isbn}")
-    public ResponseEntity<BookDto> getOne(@PathVariable(name = "isbn") String isbn) {
-        if (bookService.getOne(isbn).isPresent()) {
-            BookEntity bookFound = bookService.getOne(isbn).get();
-            return new ResponseEntity<>(
-                    bookMapper.mapToDto(bookFound),
-                    HttpStatusCode.valueOf(200)
-            );
-        }
-        return new ResponseEntity<>(HttpStatusCode.valueOf(404));
+    public ResponseEntity<ResponseDto<BookDto>> getOne(
+            @PathVariable(name = "isbn") String isbn
+    ) throws DataNotFoundException {
+        return new ResponseEntity<>(
+                new ResponseDto<>(
+                        HttpStatus.OK.value(),
+                        Constants.BOOK_FETCH_SUCCESS,
+                        bookService.getOne(isbn)
+                ), HttpStatus.OK
+        );
     }
     
     @GetMapping(path = "/books")
-    public Page<BookDto> getAll(Pageable pageable) {
-        Page<BookEntity> bookList = bookService.getAll(pageable);
-        return bookList.map(bookMapper::mapToDto);
+    public ResponseEntity<ResponseDto<List<BookDto>>> getAll(Pageable pageable) {
+        return new ResponseEntity<>(
+                new ResponseDto<>(
+                        HttpStatus.OK.value(),
+                        Constants.BOOK_FETCH_SUCCESS,
+                        bookService.getAll(pageable)
+                ), HttpStatus.OK
+        );
     }
     
     @PatchMapping(path = "/books/{isbn}")
-    public ResponseEntity<BookDto> partialUpdate(
+    public ResponseEntity<ResponseDto<BookDto>> partialUpdate(
             @PathVariable(name = "isbn") String isbn,
-            @RequestBody BookDto bookDto) {
-        if (bookService.isExist(isbn)) {
-            bookDto.setIsbn(isbn);
-            BookEntity book = bookMapper.mapToEntity(bookDto);
-            BookEntity savedBook = bookService.partialUpdate(isbn, book);
-            return new ResponseEntity<>(bookMapper.mapToDto(savedBook), HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            @RequestBody BookDto bookDto
+    ) throws DataNotFoundException, ValidationException {
+        bookDto.setIsbn(isbn);
+        BookEntity book = bookDto.toEntity();
+        return new ResponseEntity<>(
+                new ResponseDto<BookDto>(
+                        HttpStatus.OK.value(),
+                        Constants.BOOK_UPDATE_SUCCESS,
+                        bookService.partialUpdate(isbn, book)
+                ), HttpStatus.OK
+        );
     }
     
     @DeleteMapping(path = "/books/{isbn}")
-    public ResponseEntity<Void> delete(@PathVariable(name = "isbn") String isbn) {
+    public ResponseEntity<ResponseDto<Void>> delete(
+            @PathVariable(name = "isbn") String isbn
+    ) throws DataNotFoundException {
         bookService.delete(isbn);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(
+                new ResponseDto<>(
+                        HttpStatus.NO_CONTENT.value(),
+                        Constants.BOOK_DELETE_SUCCESS,
+                        null
+                ), HttpStatus.NO_CONTENT
+        );
     }
     
 }

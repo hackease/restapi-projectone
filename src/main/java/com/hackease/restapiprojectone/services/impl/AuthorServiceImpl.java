@@ -1,65 +1,70 @@
 package com.hackease.restapiprojectone.services.impl;
 
-import com.hackease.restapiprojectone.domains.entities.AuthorEntity;
+import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.domain.dtos.AuthorDto;
+import com.hackease.restapiprojectone.domain.entities.AuthorEntity;
 import com.hackease.restapiprojectone.repositories.AuthorRepository;
-import com.hackease.restapiprojectone.repositories.BookRepository;
 import com.hackease.restapiprojectone.services.AuthorService;
-import org.springframework.data.domain.Page;
+import com.hackease.restapiprojectone.services.helper.AuthorServiceHelper;
+import com.hackease.restapiprojectone.utility.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class AuthorServiceImpl implements AuthorService {
     
-    private final AuthorRepository authorRepository;
+    @Autowired
+    private AuthorServiceHelper authorServiceHelper;
     
-    private final BookRepository bookRepository;
+    @Autowired
+    private AuthorRepository authorRepository;
     
-    public AuthorServiceImpl(AuthorRepository authorRepository, BookRepository bookRepository) {
-        this.authorRepository = authorRepository;
-        this.bookRepository = bookRepository;
+    @Override
+    public AuthorDto save(AuthorEntity author) {
+        // TODO: Add Request validation
+        return authorServiceHelper.toDto(authorRepository.save(author));
     }
     
     @Override
-    public AuthorEntity save(AuthorEntity author) {
-        return authorRepository.save(author);
+    public AuthorDto getOne(Integer id) throws DataNotFoundException {
+        AuthorEntity authorEntity = authorRepository.findById(id).orElseThrow(() -> new DataNotFoundException(Constants.AUTHOR_NOT_FOUND));
+        return authorServiceHelper.toDto(authorEntity);
     }
     
     @Override
-    public Optional<AuthorEntity> getOne(Integer id) {
-         return authorRepository.findById(id);
+    public List<AuthorDto> getAll(Pageable pageable) {
+        Stream<AuthorEntity> authorEntityStream = authorRepository.findAll(pageable).stream();
+        Stream<AuthorDto> authorDtoStream = authorEntityStream.map(authorServiceHelper::toDto);
+        return authorDtoStream.collect(Collectors.toList());
     }
     
     @Override
-    public List<AuthorEntity> getAll() {
-        return authorRepository.findAll();
-    }
-    
-    @Override
-    public Page<AuthorEntity> getAll(Pageable pageable) {
-        return authorRepository.findAll(pageable);
-    }
-    
-    @Override
-    public boolean isExist(Integer id) {
-        return authorRepository.existsById(id);
-    }
-    
-    @Override
-    public AuthorEntity partialUpdate(Integer id, AuthorEntity author) {
-        AuthorEntity existingAuthor = authorRepository.findById(id).orElseThrow();
+    public AuthorDto partialUpdate(
+            Integer id,
+            AuthorEntity author
+    ) throws DataNotFoundException {
+        AuthorEntity existingAuthor = authorRepository.findById(id).orElseThrow(
+                () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
+        );
         
         if (author.getName() != null) existingAuthor.setName(author.getName());
         if (author.getAge() != null) existingAuthor.setAge(author.getAge());
         
-        return authorRepository.save(existingAuthor);
+        AuthorEntity authorEntity = authorRepository.save(existingAuthor);
+        return authorServiceHelper.toDto(authorEntity);
     }
     
     @Override
-    public void delete(Integer id) {
-        authorRepository.deleteById(id);
+    public void delete(Integer id) throws DataNotFoundException {
+        AuthorEntity existingAuthor = authorRepository.findById(id).orElseThrow(
+                () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
+        );
+        
+        authorRepository.delete(existingAuthor);
     }
 }

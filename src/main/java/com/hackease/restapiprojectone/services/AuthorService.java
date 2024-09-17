@@ -1,27 +1,29 @@
 package com.hackease.restapiprojectone.services;
 
-import com.hackease.restapiprojectone.domains.entities.AuthorEntity;
-import org.springframework.data.domain.Page;
+import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.Exceptions.ValidationException;
+import com.hackease.restapiprojectone.domain.dtos.AuthorDto;
+import com.hackease.restapiprojectone.domain.entities.AuthorEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public interface AuthorService {
     
-    AuthorEntity save(AuthorEntity author);
+    AuthorDto save(
+            AuthorEntity author
+    ) throws DataNotFoundException, ValidationException;
     
-    Optional<AuthorEntity> getOne(Integer id);
+    AuthorDto getOne(Integer id) throws DataNotFoundException;
     
-    List<AuthorEntity> getAll();
+    List<AuthorDto> getAll(Pageable pageable);
     
-    Page<AuthorEntity> getAll(Pageable pageable);
+    AuthorDto partialUpdate(
+            Integer id,
+            AuthorEntity author
+    ) throws DataNotFoundException, ValidationException;
     
-    boolean isExist(Integer id);
-    
-    AuthorEntity partialUpdate(Integer id, AuthorEntity author);
-    
-    void delete(Integer id);
+    void delete(Integer id) throws DataNotFoundException;
 }
