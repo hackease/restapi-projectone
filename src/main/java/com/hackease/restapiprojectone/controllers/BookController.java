@@ -80,7 +80,7 @@ public class BookController {
         bookDto.setIsbn(isbn);
         BookEntity book = bookDto.toEntity();
         return new ResponseEntity<>(
-                new ResponseDto<BookDto>(
+                new ResponseDto<>(
                         HttpStatus.OK.value(),
                         Constants.BOOK_UPDATE_SUCCESS,
                         bookService.partialUpdate(isbn, book)

@@ -30,4 +30,6 @@ public class Constants {
     
     public static final String INVALID_DATA_ENTERED = "Invalid data entered!";
     
+    public static final String METHOD_NOT_ALLOWED = "Method not allowed!";
+    
 }

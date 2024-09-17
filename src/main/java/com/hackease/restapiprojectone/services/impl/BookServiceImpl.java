@@ -1,6 +1,7 @@
 package com.hackease.restapiprojectone.services.impl;
 
 import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.Exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.BookDto;
 import com.hackease.restapiprojectone.domain.entities.BookEntity;
 import com.hackease.restapiprojectone.repositories.BookRepository;
@@ -63,8 +64,10 @@ public class BookServiceImpl implements BookService {
         if (book.getAuthor() != null) {
             if (book.getAuthor().getId() != null)
                 existingBook.getAuthor().setId(book.getAuthor().getId());
-            existingBook.getAuthor().setName(book.getAuthor().getName());
-            existingBook.getAuthor().setAge(book.getAuthor().getAge());
+            if (book.getAuthor().getName() != null)
+                existingBook.getAuthor().setName(book.getAuthor().getName());
+            if (book.getAuthor().getAge() != null)
+                existingBook.getAuthor().setAge(book.getAuthor().getAge());
         }
         
         return bookServiceHelper.toDto(bookRepository.save(existingBook));
