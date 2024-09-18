@@ -1,6 +1,5 @@
 package com.hackease.restapiprojectone.controllers;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
 import com.hackease.restapiprojectone.Exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.BookDto;
@@ -26,7 +25,7 @@ public class BookController {
     public ResponseEntity<ResponseDto<BookDto>> saveUpdate(
             @PathVariable(name = "isbn") String isbn,
             @RequestBody BookDto bookDto
-    ) throws DataNotFoundException, ValidationException {
+    ) throws ValidationException {
         BookEntity book = bookDto.toEntity();
         boolean isExist = bookService.isExist(isbn);
         BookDto savedUpdatedBook = bookService.saveUpdate(isbn, book);
@@ -62,11 +61,13 @@ public class BookController {
     }
     
     @GetMapping(path = "/books")
-    public ResponseEntity<ResponseDto<List<BookDto>>> getAll(Pageable pageable) {
+    public ResponseEntity<ResponseDto<List<BookDto>>> getAll(
+            Pageable pageable
+    ) throws DataNotFoundException {
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.OK.value(),
-                        Constants.BOOK_FETCH_SUCCESS,
+                        Constants.BOOKS_FETCH_SUCCESS,
                         bookService.getAll(pageable)
                 ), HttpStatus.OK
         );
@@ -95,10 +96,10 @@ public class BookController {
         bookService.delete(isbn);
         return new ResponseEntity<>(
                 new ResponseDto<>(
-                        HttpStatus.NO_CONTENT.value(),
+                        HttpStatus.OK.value(),
                         Constants.BOOK_DELETE_SUCCESS,
                         null
-                ), HttpStatus.NO_CONTENT
+                ), HttpStatus.OK
         );
     }
     

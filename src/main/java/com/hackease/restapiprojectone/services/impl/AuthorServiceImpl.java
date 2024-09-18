@@ -1,11 +1,13 @@
 package com.hackease.restapiprojectone.services.impl;
 
 import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.Exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.AuthorDto;
 import com.hackease.restapiprojectone.domain.entities.AuthorEntity;
 import com.hackease.restapiprojectone.repositories.AuthorRepository;
 import com.hackease.restapiprojectone.services.AuthorService;
 import com.hackease.restapiprojectone.services.helper.AuthorServiceHelper;
+import com.hackease.restapiprojectone.services.helper.RequestValidationChecker;
 import com.hackease.restapiprojectone.utility.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -19,41 +21,59 @@ import java.util.stream.Stream;
 public class AuthorServiceImpl implements AuthorService {
     
     @Autowired
+    private AuthorRepository authorRepository;
+    
+    @Autowired
     private AuthorServiceHelper authorServiceHelper;
     
     @Autowired
-    private AuthorRepository authorRepository;
+    private RequestValidationChecker requestValidationChecker;
     
     @Override
-    public AuthorDto save(AuthorEntity author) {
-        // TODO: Add Request validation
+    public AuthorDto save(AuthorEntity author) throws ValidationException {
+        if (author.getName() != null)
+            requestValidationChecker.validationCheck(author.getName());
+        if (author.getAge() != null)
+            requestValidationChecker.validationCheck(author.getAge());
+        
         return authorServiceHelper.toDto(authorRepository.save(author));
     }
     
     @Override
     public AuthorDto getOne(Integer id) throws DataNotFoundException {
-        AuthorEntity authorEntity = authorRepository.findById(id).orElseThrow(() -> new DataNotFoundException(Constants.AUTHOR_NOT_FOUND));
+        AuthorEntity authorEntity = authorRepository.findById(id).orElseThrow(
+                () -> new DataNotFoundException(Constants.AUTHOR_NOT_FOUND)
+        );
         return authorServiceHelper.toDto(authorEntity);
     }
     
     @Override
-    public List<AuthorDto> getAll(Pageable pageable) {
+    public List<AuthorDto> getAll(Pageable pageable) throws DataNotFoundException {
         Stream<AuthorEntity> authorEntityStream = authorRepository.findAll(pageable).stream();
         Stream<AuthorDto> authorDtoStream = authorEntityStream.map(authorServiceHelper::toDto);
-        return authorDtoStream.collect(Collectors.toList());
+        List<AuthorDto> authorDtoList = authorDtoStream.collect(Collectors.toList());
+        if (authorDtoList.isEmpty())
+            throw new DataNotFoundException(Constants.AUTHORS_NOT_FOUND);
+        return authorDtoList;
     }
     
     @Override
     public AuthorDto partialUpdate(
             Integer id,
             AuthorEntity author
-    ) throws DataNotFoundException {
+    ) throws DataNotFoundException, ValidationException {
         AuthorEntity existingAuthor = authorRepository.findById(id).orElseThrow(
                 () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
         );
         
-        if (author.getName() != null) existingAuthor.setName(author.getName());
-        if (author.getAge() != null) existingAuthor.setAge(author.getAge());
+        if (author.getName() != null) {
+            requestValidationChecker.validationCheck(author.getName());
+            existingAuthor.setName(author.getName());
+        }
+        if (author.getAge() != null) {
+            requestValidationChecker.validationCheck(author.getAge());
+            existingAuthor.setAge(author.getAge());
+        }
         
         AuthorEntity authorEntity = authorRepository.save(existingAuthor);
         return authorServiceHelper.toDto(authorEntity);
@@ -62,9 +82,10 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public void delete(Integer id) throws DataNotFoundException {
         AuthorEntity existingAuthor = authorRepository.findById(id).orElseThrow(
-                () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
+                () -> new DataNotFoundException(Constants.AUTHOR_NOT_FOUND)
         );
         
         authorRepository.delete(existingAuthor);
     }
+    
 }

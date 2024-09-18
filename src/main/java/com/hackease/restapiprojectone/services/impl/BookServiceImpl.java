@@ -7,6 +7,7 @@ import com.hackease.restapiprojectone.domain.entities.BookEntity;
 import com.hackease.restapiprojectone.repositories.BookRepository;
 import com.hackease.restapiprojectone.services.BookService;
 import com.hackease.restapiprojectone.services.helper.BookServiceHelper;
+import com.hackease.restapiprojectone.services.helper.RequestValidationChecker;
 import com.hackease.restapiprojectone.utility.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +26,22 @@ public class BookServiceImpl implements BookService {
     @Autowired
     private BookServiceHelper bookServiceHelper;
     
+    @Autowired
+    private RequestValidationChecker requestValidationChecker;
+    
     @Override
-    public BookDto saveUpdate(String isbn, BookEntity book) {
+    public BookDto saveUpdate(String isbn, BookEntity book) throws ValidationException {
         book.setIsbn(isbn);
+        
+        if (book.getTitle() != null)
+            requestValidationChecker.validationCheck(book.getTitle());
+        if (book.getAuthor() != null) {
+            if (book.getAuthor().getName() != null)
+                requestValidationChecker.validationCheck(book.getAuthor().getName());
+            if (book.getAuthor().getAge() != null)
+                requestValidationChecker.validationCheck(book.getAuthor().getAge());
+        }
+        
         return bookServiceHelper.toDto(bookRepository.save(book));
     }
     
@@ -40,10 +54,13 @@ public class BookServiceImpl implements BookService {
     }
     
     @Override
-    public List<BookDto> getAll(Pageable pageable) {
+    public List<BookDto> getAll(Pageable pageable) throws DataNotFoundException {
         Stream<BookEntity> bookEntityStream = bookRepository.findAll(pageable).stream();
         Stream<BookDto> bookDtoStream = bookEntityStream.map(bookServiceHelper::toDto);
-        return bookDtoStream.collect(Collectors.toList());
+        List<BookDto> bookDtoList = bookDtoStream.collect(Collectors.toList());
+        if (bookDtoList.isEmpty())
+            throw new DataNotFoundException(Constants.BOOKS_NOT_FOUND);
+        return bookDtoList;
     }
     
     @Override
@@ -55,19 +72,24 @@ public class BookServiceImpl implements BookService {
     public BookDto partialUpdate(
             String isbn,
             BookEntity book
-    ) throws DataNotFoundException {
+    ) throws DataNotFoundException, ValidationException {
         BookEntity existingBook = bookRepository.findById(isbn).orElseThrow(
                 () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
         );
         
-        if (book.getTitle() != null) existingBook.setTitle(book.getTitle());
+        if (book.getTitle() != null) {
+            requestValidationChecker.validationCheck(book.getTitle());
+            existingBook.setTitle(book.getTitle());
+        }
         if (book.getAuthor() != null) {
-            if (book.getAuthor().getId() != null)
-                existingBook.getAuthor().setId(book.getAuthor().getId());
-            if (book.getAuthor().getName() != null)
+            if (book.getAuthor().getName() != null) {
+                requestValidationChecker.validationCheck(book.getAuthor().getName());
                 existingBook.getAuthor().setName(book.getAuthor().getName());
-            if (book.getAuthor().getAge() != null)
+            }
+            if (book.getAuthor().getAge() != null) {
+                requestValidationChecker.validationCheck(book.getAuthor().getAge());
                 existingBook.getAuthor().setAge(book.getAuthor().getAge());
+            }
         }
         
         return bookServiceHelper.toDto(bookRepository.save(existingBook));

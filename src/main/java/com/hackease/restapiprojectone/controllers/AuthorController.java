@@ -24,7 +24,7 @@ public class AuthorController {
     @PostMapping(path = "/authors")
     public ResponseEntity<ResponseDto<AuthorDto>> save(
             @RequestBody AuthorDto authorDto
-    ) throws DataNotFoundException, ValidationException {
+    ) throws ValidationException {
         AuthorEntity author = authorDto.toEntity();
         return new ResponseEntity<>(
                 new ResponseDto<>(
@@ -51,11 +51,11 @@ public class AuthorController {
     @GetMapping(path = "/authors")
     public ResponseEntity<ResponseDto<List<AuthorDto>>> getAll(
             Pageable pageable
-    ) {
+    ) throws DataNotFoundException {
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.OK.value(),
-                        Constants.AUTHOR_FETCH_SUCCESS,
+                        Constants.AUTHORS_FETCH_SUCCESS,
                         authorService.getAll(pageable)
                 ), HttpStatus.OK
         );
@@ -65,7 +65,7 @@ public class AuthorController {
     public ResponseEntity<ResponseDto<AuthorDto>> fullUpdate(
             @PathVariable(name = "id") Integer id,
             @RequestBody AuthorDto authorDto
-    ) throws DataNotFoundException, ValidationException {
+    ) throws ValidationException {
         authorDto.setId(id);
         AuthorEntity author = authorDto.toEntity();
         return new ResponseEntity<>(
@@ -100,10 +100,10 @@ public class AuthorController {
         authorService.delete(id);
         return new ResponseEntity<>(
                 new ResponseDto<>(
-                        HttpStatus.NO_CONTENT.value(),
+                        HttpStatus.OK.value(),
                         Constants.AUTHOR_DELETE_SUCCESS,
                         null
-                ), HttpStatus.NO_CONTENT
+                ), HttpStatus.OK
         );
     }
     

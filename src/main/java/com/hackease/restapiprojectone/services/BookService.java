@@ -16,11 +16,11 @@ public interface BookService {
     BookDto saveUpdate(
             String isbn,
             BookEntity book
-    ) throws DataNotFoundException, ValidationException;
+    ) throws ValidationException;
     
     BookDto getOne(String isbn) throws DataNotFoundException;
     
-    List<BookDto> getAll(Pageable pageable);
+    List<BookDto> getAll(Pageable pageable) throws DataNotFoundException;
     
     boolean isExist(String isbn);
     

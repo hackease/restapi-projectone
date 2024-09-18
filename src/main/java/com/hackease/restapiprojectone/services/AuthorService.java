@@ -14,11 +14,11 @@ public interface AuthorService {
     
     AuthorDto save(
             AuthorEntity author
-    ) throws DataNotFoundException, ValidationException;
+    ) throws ValidationException;
     
     AuthorDto getOne(Integer id) throws DataNotFoundException;
     
-    List<AuthorDto> getAll(Pageable pageable);
+    List<AuthorDto> getAll(Pageable pageable) throws DataNotFoundException;
     
     AuthorDto partialUpdate(
             Integer id,

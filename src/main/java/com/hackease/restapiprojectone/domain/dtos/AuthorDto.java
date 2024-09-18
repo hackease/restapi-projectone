@@ -16,7 +16,7 @@ public class AuthorDto {
     
     private Integer age;
     
-    public AuthorEntity toEntity(){
+    public AuthorEntity toEntity() {
         return new AuthorEntity(
                 this.id,
                 this.name,
