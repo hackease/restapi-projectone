@@ -1,7 +1,7 @@
-package com.hackease.restapiprojectone.Exceptions.handler;
+package com.hackease.restapiprojectone.exceptions.handler;
 
-import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
-import com.hackease.restapiprojectone.Exceptions.ValidationException;
+import com.hackease.restapiprojectone.exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.ResponseDto;
 import com.hackease.restapiprojectone.utility.Constants;
 import org.springframework.http.HttpStatus;

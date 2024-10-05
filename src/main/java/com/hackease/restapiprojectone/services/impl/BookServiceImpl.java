@@ -1,16 +1,15 @@
 package com.hackease.restapiprojectone.services.impl;
 
-import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
-import com.hackease.restapiprojectone.Exceptions.ValidationException;
+import com.hackease.restapiprojectone.exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.BookDto;
 import com.hackease.restapiprojectone.domain.entities.BookEntity;
 import com.hackease.restapiprojectone.repositories.BookRepository;
 import com.hackease.restapiprojectone.services.BookService;
-import com.hackease.restapiprojectone.services.helper.BookServiceHelper;
+import com.hackease.restapiprojectone.mappers.BookMapper;
 import com.hackease.restapiprojectone.services.helper.RequestValidationChecker;
 import com.hackease.restapiprojectone.utility.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,25 +23,28 @@ public class BookServiceImpl implements BookService {
     private BookRepository bookRepository;
     
     @Autowired
-    private BookServiceHelper bookServiceHelper;
+    private BookMapper bookMapper;
     
     @Autowired
     private RequestValidationChecker requestValidationChecker;
     
     @Override
-    public BookDto saveUpdate(String isbn, BookEntity book) throws ValidationException {
-        book.setIsbn(isbn);
+    public BookDto saveUpdate(String isbn, BookDto bookDto) throws ValidationException {
         
-        if (book.getTitle() != null)
-            requestValidationChecker.validationCheck(book.getTitle());
-        if (book.getAuthor() != null) {
-            if (book.getAuthor().getName() != null)
-                requestValidationChecker.validationCheck(book.getAuthor().getName());
-            if (book.getAuthor().getAge() != null)
-                requestValidationChecker.validationCheck(book.getAuthor().getAge());
+        BookEntity bookEntity = bookMapper.toEntity(bookDto);
+        
+        bookEntity.setIsbn(isbn);
+        
+        if (bookEntity.getTitle() != null)
+            requestValidationChecker.validationCheck(bookEntity.getTitle());
+        if (bookEntity.getAuthor() != null) {
+            if (bookEntity.getAuthor().getName() != null)
+                requestValidationChecker.validationCheck(bookEntity.getAuthor().getName());
+            if (bookEntity.getAuthor().getAge() != null)
+                requestValidationChecker.validationCheck(bookEntity.getAuthor().getAge());
         }
         
-        return bookServiceHelper.toDto(bookRepository.save(book));
+        return bookMapper.toDto(bookRepository.save(bookEntity));
     }
     
     @Override
@@ -50,17 +52,20 @@ public class BookServiceImpl implements BookService {
         BookEntity bookEntity = bookRepository.findById(isbn).orElseThrow(
                 () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
         );
-        return bookServiceHelper.toDto(bookEntity);
+        return bookMapper.toDto(bookEntity);
     }
     
     @Override
-    public List<BookDto> getAll(Pageable pageable) throws DataNotFoundException {
-        Stream<BookEntity> bookEntityStream = bookRepository.findAll(pageable).stream();
-        Stream<BookDto> bookDtoStream = bookEntityStream.map(bookServiceHelper::toDto);
-        List<BookDto> bookDtoList = bookDtoStream.collect(Collectors.toList());
-        if (bookDtoList.isEmpty())
+    public List<BookDto> getAll() throws DataNotFoundException {
+        List<BookEntity> bookEntityList = bookRepository.findAll();
+        
+        if (bookEntityList.isEmpty())
             throw new DataNotFoundException(Constants.BOOKS_NOT_FOUND);
-        return bookDtoList;
+        
+        Stream<BookEntity> bookEntityStream = bookEntityList.stream();
+        Stream<BookDto> bookDtoStream = bookEntityStream.map(bookMapper::toDto);
+        
+        return bookDtoStream.collect(Collectors.toList());
     }
     
     @Override
@@ -71,28 +76,30 @@ public class BookServiceImpl implements BookService {
     @Override
     public BookDto partialUpdate(
             String isbn,
-            BookEntity book
+            BookDto bookDto
     ) throws DataNotFoundException, ValidationException {
         BookEntity existingBook = bookRepository.findById(isbn).orElseThrow(
                 () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
         );
         
-        if (book.getTitle() != null) {
-            requestValidationChecker.validationCheck(book.getTitle());
-            existingBook.setTitle(book.getTitle());
+        BookEntity bookEntity = bookMapper.toEntity(bookDto);
+        
+        if (bookEntity.getTitle() != null) {
+            requestValidationChecker.validationCheck(bookEntity.getTitle());
+            existingBook.setTitle(bookEntity.getTitle());
         }
-        if (book.getAuthor() != null) {
-            if (book.getAuthor().getName() != null) {
-                requestValidationChecker.validationCheck(book.getAuthor().getName());
-                existingBook.getAuthor().setName(book.getAuthor().getName());
+        if (bookEntity.getAuthor() != null) {
+            if (bookEntity.getAuthor().getName() != null) {
+                requestValidationChecker.validationCheck(bookEntity.getAuthor().getName());
+                existingBook.getAuthor().setName(bookEntity.getAuthor().getName());
             }
-            if (book.getAuthor().getAge() != null) {
-                requestValidationChecker.validationCheck(book.getAuthor().getAge());
-                existingBook.getAuthor().setAge(book.getAuthor().getAge());
+            if (bookEntity.getAuthor().getAge() != null) {
+                requestValidationChecker.validationCheck(bookEntity.getAuthor().getAge());
+                existingBook.getAuthor().setAge(bookEntity.getAuthor().getAge());
             }
         }
         
-        return bookServiceHelper.toDto(bookRepository.save(existingBook));
+        return bookMapper.toDto(bookRepository.save(existingBook));
     }
     
     @Override

@@ -6,5 +6,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AuthorRepository extends JpaRepository<AuthorEntity, Integer>, PagingAndSortingRepository<AuthorEntity, Integer> {
+public interface AuthorRepository extends JpaRepository<AuthorEntity, Integer> {
+
 }

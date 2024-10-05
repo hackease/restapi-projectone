@@ -1,4 +1,4 @@
-package com.hackease.restapiprojectone.Exceptions;
+package com.hackease.restapiprojectone.exceptions;
 
 public class DataNotFoundException extends ApplicationException{
     

@@ -1,14 +1,12 @@
 package com.hackease.restapiprojectone.controllers;
 
-import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
-import com.hackease.restapiprojectone.Exceptions.ValidationException;
+import com.hackease.restapiprojectone.exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.BookDto;
 import com.hackease.restapiprojectone.domain.dtos.ResponseDto;
-import com.hackease.restapiprojectone.domain.entities.BookEntity;
 import com.hackease.restapiprojectone.services.BookService;
 import com.hackease.restapiprojectone.utility.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,17 +24,19 @@ public class BookController {
             @PathVariable(name = "isbn") String isbn,
             @RequestBody BookDto bookDto
     ) throws ValidationException {
-        BookEntity book = bookDto.toEntity();
-        boolean isExist = bookService.isExist(isbn);
-        BookDto savedUpdatedBook = bookService.saveUpdate(isbn, book);
         
-        if (isExist) return new ResponseEntity<>(
-                new ResponseDto<>(
-                        HttpStatus.OK.value(),
-                        Constants.BOOK_CHANGED_SUCCESS,
-                        savedUpdatedBook
-                ), HttpStatus.OK
-        );
+        boolean isExist = bookService.isExist(isbn);
+        BookDto savedUpdatedBook = bookService.saveUpdate(isbn, bookDto);
+        
+        if (isExist) {
+            return new ResponseEntity<>(
+                    new ResponseDto<>(
+                            HttpStatus.OK.value(),
+                            Constants.BOOK_CHANGED_SUCCESS,
+                            savedUpdatedBook
+                    ), HttpStatus.OK
+            );
+        }
         
         return new ResponseEntity<>(
                 new ResponseDto<>(
@@ -61,14 +61,13 @@ public class BookController {
     }
     
     @GetMapping(path = "/books")
-    public ResponseEntity<ResponseDto<List<BookDto>>> getAll(
-            Pageable pageable
-    ) throws DataNotFoundException {
+    public ResponseEntity<ResponseDto<List<BookDto>>> getAll()
+            throws DataNotFoundException {
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.OK.value(),
                         Constants.BOOKS_FETCH_SUCCESS,
-                        bookService.getAll(pageable)
+                        bookService.getAll()
                 ), HttpStatus.OK
         );
     }
@@ -79,12 +78,12 @@ public class BookController {
             @RequestBody BookDto bookDto
     ) throws DataNotFoundException, ValidationException {
         bookDto.setIsbn(isbn);
-        BookEntity book = bookDto.toEntity();
+        
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.OK.value(),
                         Constants.BOOK_UPDATE_SUCCESS,
-                        bookService.partialUpdate(isbn, book)
+                        bookService.partialUpdate(isbn, bookDto)
                 ), HttpStatus.OK
         );
     }

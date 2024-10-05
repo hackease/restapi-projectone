@@ -1,14 +1,12 @@
 package com.hackease.restapiprojectone.controllers;
 
-import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
-import com.hackease.restapiprojectone.Exceptions.ValidationException;
+import com.hackease.restapiprojectone.exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.AuthorDto;
 import com.hackease.restapiprojectone.domain.dtos.ResponseDto;
-import com.hackease.restapiprojectone.domain.entities.AuthorEntity;
 import com.hackease.restapiprojectone.services.AuthorService;
 import com.hackease.restapiprojectone.utility.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,12 +23,11 @@ public class AuthorController {
     public ResponseEntity<ResponseDto<AuthorDto>> save(
             @RequestBody AuthorDto authorDto
     ) throws ValidationException {
-        AuthorEntity author = authorDto.toEntity();
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.CREATED.value(),
                         Constants.AUTHOR_CREATE_SUCCESS,
-                        authorService.save(author)
+                        authorService.save(authorDto)
                 ), HttpStatus.CREATED
         );
     }
@@ -49,14 +46,13 @@ public class AuthorController {
     }
     
     @GetMapping(path = "/authors")
-    public ResponseEntity<ResponseDto<List<AuthorDto>>> getAll(
-            Pageable pageable
-    ) throws DataNotFoundException {
+    public ResponseEntity<ResponseDto<List<AuthorDto>>> getAll()
+            throws DataNotFoundException {
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.OK.value(),
                         Constants.AUTHORS_FETCH_SUCCESS,
-                        authorService.getAll(pageable)
+                        authorService.getAll()
                 ), HttpStatus.OK
         );
     }
@@ -67,12 +63,11 @@ public class AuthorController {
             @RequestBody AuthorDto authorDto
     ) throws ValidationException {
         authorDto.setId(id);
-        AuthorEntity author = authorDto.toEntity();
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.OK.value(),
                         Constants.AUTHOR_CHANGED_SUCCESS,
-                        authorService.save(author)
+                        authorService.save(authorDto)
                 ), HttpStatus.OK
         );
     }
@@ -83,12 +78,11 @@ public class AuthorController {
             @RequestBody AuthorDto authorDto
     ) throws DataNotFoundException, ValidationException {
         authorDto.setId(id);
-        AuthorEntity author = authorDto.toEntity();
         return new ResponseEntity<>(
                 new ResponseDto<>(
                         HttpStatus.OK.value(),
                         Constants.AUTHOR_UPDATE_SUCCESS,
-                        authorService.partialUpdate(id, author)
+                        authorService.partialUpdate(id, authorDto)
                 ), HttpStatus.OK
         );
     }

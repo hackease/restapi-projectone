@@ -6,5 +6,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface BookRepository extends JpaRepository<BookEntity, String>, PagingAndSortingRepository<BookEntity, String> {
+public interface BookRepository extends JpaRepository<BookEntity, String> {
+
 }

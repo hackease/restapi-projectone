@@ -1,4 +1,4 @@
-package com.hackease.restapiprojectone.Exceptions;
+package com.hackease.restapiprojectone.exceptions;
 
 public class ApplicationException extends Exception {
     

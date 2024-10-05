@@ -1,16 +1,15 @@
 package com.hackease.restapiprojectone.services.impl;
 
-import com.hackease.restapiprojectone.Exceptions.DataNotFoundException;
-import com.hackease.restapiprojectone.Exceptions.ValidationException;
+import com.hackease.restapiprojectone.exceptions.DataNotFoundException;
+import com.hackease.restapiprojectone.exceptions.ValidationException;
 import com.hackease.restapiprojectone.domain.dtos.AuthorDto;
 import com.hackease.restapiprojectone.domain.entities.AuthorEntity;
 import com.hackease.restapiprojectone.repositories.AuthorRepository;
 import com.hackease.restapiprojectone.services.AuthorService;
-import com.hackease.restapiprojectone.services.helper.AuthorServiceHelper;
+import com.hackease.restapiprojectone.mappers.AuthorMapper;
 import com.hackease.restapiprojectone.services.helper.RequestValidationChecker;
 import com.hackease.restapiprojectone.utility.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,19 +23,21 @@ public class AuthorServiceImpl implements AuthorService {
     private AuthorRepository authorRepository;
     
     @Autowired
-    private AuthorServiceHelper authorServiceHelper;
+    private AuthorMapper authorMapper;
     
     @Autowired
     private RequestValidationChecker requestValidationChecker;
     
     @Override
-    public AuthorDto save(AuthorEntity author) throws ValidationException {
-        if (author.getName() != null)
-            requestValidationChecker.validationCheck(author.getName());
-        if (author.getAge() != null)
-            requestValidationChecker.validationCheck(author.getAge());
+    public AuthorDto save(AuthorDto authorDto) throws ValidationException {
+        AuthorEntity authorEntity = authorMapper.toEntity(authorDto);
         
-        return authorServiceHelper.toDto(authorRepository.save(author));
+        if (authorEntity.getName() != null)
+            requestValidationChecker.validationCheck(authorEntity.getName());
+        if (authorEntity.getAge() != null)
+            requestValidationChecker.validationCheck(authorEntity.getAge());
+        
+        return authorMapper.toDto(authorRepository.save(authorEntity));
     }
     
     @Override
@@ -44,39 +45,44 @@ public class AuthorServiceImpl implements AuthorService {
         AuthorEntity authorEntity = authorRepository.findById(id).orElseThrow(
                 () -> new DataNotFoundException(Constants.AUTHOR_NOT_FOUND)
         );
-        return authorServiceHelper.toDto(authorEntity);
+        
+        return authorMapper.toDto(authorEntity);
     }
     
     @Override
-    public List<AuthorDto> getAll(Pageable pageable) throws DataNotFoundException {
-        Stream<AuthorEntity> authorEntityStream = authorRepository.findAll(pageable).stream();
-        Stream<AuthorDto> authorDtoStream = authorEntityStream.map(authorServiceHelper::toDto);
-        List<AuthorDto> authorDtoList = authorDtoStream.collect(Collectors.toList());
-        if (authorDtoList.isEmpty())
+    public List<AuthorDto> getAll() throws DataNotFoundException {
+        List<AuthorEntity> authorEntityList = authorRepository.findAll();
+        
+        if (authorEntityList.isEmpty())
             throw new DataNotFoundException(Constants.AUTHORS_NOT_FOUND);
-        return authorDtoList;
+        
+        Stream<AuthorEntity> authorEntityStream = authorEntityList.stream();
+        Stream<AuthorDto> authorDtoStream = authorEntityStream.map(authorMapper::toDto);
+        
+        return authorDtoStream.collect(Collectors.toList());
     }
     
     @Override
     public AuthorDto partialUpdate(
             Integer id,
-            AuthorEntity author
+            AuthorDto authorDto
     ) throws DataNotFoundException, ValidationException {
         AuthorEntity existingAuthor = authorRepository.findById(id).orElseThrow(
                 () -> new DataNotFoundException(Constants.BOOK_NOT_FOUND)
         );
         
-        if (author.getName() != null) {
-            requestValidationChecker.validationCheck(author.getName());
-            existingAuthor.setName(author.getName());
+        AuthorEntity authorEntity = authorMapper.toEntity(authorDto);
+        
+        if (authorEntity.getName() != null) {
+            requestValidationChecker.validationCheck(authorEntity.getName());
+            existingAuthor.setName(authorEntity.getName());
         }
-        if (author.getAge() != null) {
-            requestValidationChecker.validationCheck(author.getAge());
-            existingAuthor.setAge(author.getAge());
+        if (authorEntity.getAge() != null) {
+            requestValidationChecker.validationCheck(authorEntity.getAge());
+            existingAuthor.setAge(authorEntity.getAge());
         }
         
-        AuthorEntity authorEntity = authorRepository.save(existingAuthor);
-        return authorServiceHelper.toDto(authorEntity);
+        return authorMapper.toDto(authorRepository.save(existingAuthor));
     }
     
     @Override
